@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+.env
+
+# Airflow
+airflow.db
+logs/
+webserver_config.py
+
+# Postgres / Docker
+pgdata/
+*.pid
+
+# OS
+.DS_Store
+Thumbs.db

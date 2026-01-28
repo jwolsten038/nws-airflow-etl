@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: etl_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fraud_analysis
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  airflow:
+    image: apache/airflow:2.7.3
+    container_name: etl_airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      _PIP_ADDITIONAL_REQUIREMENTS: pandas requests sqlalchemy psycopg2-binary
+
+      PYTHONPATH: /opt/airflow
+
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: fraud_analysis
+      PGUSER: postgres
+      PGPASSWORD: postgres
+
+
+
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _AIRFLOW_WWW_USER_FIRSTNAME: ${_AIRFLOW_WWW_USER_FIRSTNAME:-Air}
+      _AIRFLOW_WWW_USER_LASTNAME: ${_AIRFLOW_WWW_USER_LASTNAME:-Flow}
+      _AIRFLOW_WWW_USER_EMAIL: ${_AIRFLOW_WWW_USER_EMAIL:-airflow@example.com}
+
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./etl:/opt/airflow/etl
+
+    command: >
+      bash -lc "airflow db init &&
+      airflow users create --username \"${_AIRFLOW_WWW_USER_USERNAME:-airflow}\" --password \"${_AIRFLOW_WWW_USER_PASSWORD:-airflow}\" --firstname \"${_AIRFLOW_WWW_USER_FIRSTNAME:-Air}\" --lastname \"${_AIRFLOW_WWW_USER_LASTNAME:-Flow}\" --role Admin --email \"${_AIRFLOW_WWW_USER_EMAIL:-airflow@example.com}\" || true &&
+      airflow webserver & airflow scheduler"
+
+
+volumes:
+  pgdata:
