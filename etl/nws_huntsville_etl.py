@@ -28,11 +28,7 @@ def fetch_hourly_periods(lat: float, lon: float) -> List[Dict[str, Any]]:
     return r2.json()["properties"]["periods"]
 
 def get_engine():
-    """
-    Build a SQLAlchemy engine from environment variables.
-    Set these in your shell / Airflow environment:
-      PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD
-    """
+
     url = URL.create(
         "postgresql+psycopg2",
         username=os.getenv("PGUSER", "postgres"),
